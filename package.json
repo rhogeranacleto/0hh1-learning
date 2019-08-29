@@ -10,6 +10,8 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@tensorflow/tfjs": "^1.2.8",
+    "@tensorflow/tfjs-node": "^1.2.8",
     "blessed": "^0.1.81",
     "blessed-contrib": "^4.8.16",
     "puppeteer": "^1.19.0",
