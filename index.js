@@ -48,14 +48,14 @@ const errorData = {
     line: 'red'
   }
 }
-screen.append(line) //must append before setting data
+// screen.append(line) //must append before setting data
 line.setData([stepData])
 
 screen.key(['escape', 'q', 'C-c'], function (ch, key) {
   return process.exit(0);
 });
 
-screen.render();
+// screen.render();
 
 (async () => {
 
@@ -126,7 +126,7 @@ screen.render();
 
   const resolveGame = reimprove();
 
-  while (true) {
+  while (false) {
 
     await page.goto(`file://${__dirname}/0hh1/index.html`);
     await resolveGame({

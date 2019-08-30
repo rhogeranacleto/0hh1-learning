@@ -14,6 +14,7 @@
     "@tensorflow/tfjs-node": "^1.2.8",
     "blessed": "^0.1.81",
     "blessed-contrib": "^4.8.16",
+    "convnetjs": "^0.3.0",
     "puppeteer": "^1.19.0",
     "reimprovejs": "0.0.2"
   },
