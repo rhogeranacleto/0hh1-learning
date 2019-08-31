@@ -2,6 +2,57 @@ require('./util');
 require('./convnet');
 const deepqlearn = require('./deepqlearn');
 const driver = require('./driver');
+const plotly = require('plotly')('rhoger.anacleto', 'ZAtrKc2j17ztdIx2nzVC');
+
+var initData = [
+  // {
+  //   x: [],
+  //   y: [],
+  //   stream: {
+  //     token: 'gx76qwqcqi'
+  //   },
+  //   fill: "tozeroy",
+  //   type: "scatter"
+  // },
+  {
+    x: [],
+    y: [],
+    stream: {
+      token: 'h21mxgy8c8'
+    },
+    fill: "tonexty",
+    type: "scatter"
+  }];
+
+var initGraphOptions = {
+  fileopt: "overwrite",
+  filename: "ai"
+};
+
+function plot() {
+
+  return new Promise((resolve, reject) => {
+
+    plotly.plot(initData, initGraphOptions, function (err, msg) {
+
+      if (err) return reject(err)
+
+      // var stream1 = plotly.stream('gx76qwqcqi', function (err, res) {
+      //   console.log(err, res);
+      // });
+
+      var stream2 = plotly.stream('h21mxgy8c8', function (err, res) {
+        console.log(err, res);
+      });
+
+      return resolve({
+        msg,
+        // stream1,
+        stream2
+      });
+    });
+  })
+}
 
 const inputsCount = 16;
 const actionCount = inputsCount * 2;
@@ -41,16 +92,36 @@ const brain = new deepqlearn.Brain(inputsCount, actionCount, opt); // woohoo
 let times = 0;
 let plus = 0;
 let record = 0;
+let attemptive = 0;
 
 async function ai(total = 5000) {
+
+  const { msg, stream2 } = await plot();
+
+  // console.log(msg);
 
   const game = await driver();
 
   let ended = false;
+  let epoch = 0;
+
+  async function finalizeEpoch() {
+
+    // var streamObject = JSON.stringify({ x: times, y: attemptive });
+    // stream1.write(streamObject + '\n');
+    var streamObject2 = JSON.stringify({ x: epoch++, y: plus });
+    stream2.write(streamObject2 + '\n');
+
+    await game.restart();
+
+    plus = 0;
+    attemptive = 0;
+  }
 
   do {
 
     times++;
+    attemptive++;
 
     const inputs = await game.getInputs();
 
@@ -69,22 +140,17 @@ async function ai(total = 5000) {
 
       isValid = await game.isValid();
 
-      reward = isValid ? 1 : -1;
+      reward = isValid ? 1 : -0.8;
     } else {
 
-      reward = -0.6
+      reward = -0.3
     }
 
     brain.backward(reward);
 
     if (!isValid) {
 
-      await game.restart();
-      record = Math.max(record, plus)
-      plus = 0;
-
-      console.log('Record', record);
-      continue;
+      await finalizeEpoch();
     } else {
 
       plus++;
@@ -93,7 +159,7 @@ async function ai(total = 5000) {
 
       if (ended) {
 
-        console.log('TERMINOU!');
+        await finalizeEpoch();
       }
     }
   } while (!ended && times < total);
@@ -101,7 +167,7 @@ async function ai(total = 5000) {
   return game;
 }
 
-ai(4000).then(async game => {
+ai(10000).then(async game => {
 
   console.log('trienou');
 

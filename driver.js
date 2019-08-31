@@ -49,10 +49,10 @@ async function driver() {
     // console.log(index, color)
 
     await tiles[index].click();
+
     if (color === 2) {
 
-    return tiles[index].click();
-
+      return tiles[index].click();
     }
   }
 
