@@ -75,6 +75,11 @@ async function driver() {
     return tiles[index];
   }
 
+  async function getPossibleValues() {
+
+    return page.evaluate(() => window.Game.grid.tiles.map(tile => tile.possibleValues));
+  }
+
   async function waitForGridReady() {
 
     return page.waitFor(() => window.Game.grid);
@@ -89,7 +94,8 @@ async function driver() {
     clickOnTile,
     isTileWrong,
     getTile,
-    waitForGridReady
+    waitForGridReady,
+    getPossibleValues
   };
 }
 

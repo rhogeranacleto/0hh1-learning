@@ -245,7 +245,7 @@ var Game = new (function() {
     undoStack = [];
     undone = false;
     gameEnded = false;
-
+    Game.grid.tiles.forEach(tile => tile.collect(Game.grid.hint))
     setTimeout(showGame, 0);
   }
 
@@ -364,7 +364,11 @@ var Game = new (function() {
         tile.clear();
 
       if (tile.value > 0)
-        checkTOH = setTimeout(function(){checkForLevelComplete();}, 700);
+        checkTOH = setTimeout(function () { checkForLevelComplete(); }, 700);
+      
+      Game.grid.tiles.forEach(tile => tile.collect(Game.grid.hint))
+      
+      console.log(Game.grid.tiles.map(tile=>tile.possibleValues))
       return false;
     });
   }
@@ -464,7 +468,7 @@ var Game = new (function() {
       return;
     }
 
-    endGame();
+    // endGame();
   }
 
   function tutorialPlayed() {

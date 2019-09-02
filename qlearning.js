@@ -68,7 +68,7 @@ layer_defs.push({ type: 'fc', num_neurons: 50, activation: 'relu' });
 layer_defs.push({ type: 'regression', num_neurons: actionCount });
 
 const tdtrainer_options = {
-  learning_rate: 0.01,
+  learning_rate: 0.015,
   momentum: 0.0,
   batch_size: 64,
   l2_decay: 0.01
@@ -98,21 +98,25 @@ async function ai(total = 5000) {
 
   const { msg, stream2 } = await plot();
 
-  // console.log(msg);
+  console.log(msg);
 
   const game = await driver();
 
   let ended = false;
   let epoch = 0;
+  let possibleValues = await game.getPossibleValues();
 
   async function finalizeEpoch() {
 
     // var streamObject = JSON.stringify({ x: times, y: attemptive });
     // stream1.write(streamObject + '\n');
-    var streamObject2 = JSON.stringify({ x: epoch++, y: plus });
+    var streamObject2 = JSON.stringify({ x: epoch++, y: attemptive });
     stream2.write(streamObject2 + '\n');
 
     await game.restart();
+    possibleValues = await game.getPossibleValues();
+
+    times++;
 
     plus = 0;
     attemptive = 0;
@@ -120,54 +124,66 @@ async function ai(total = 5000) {
 
   do {
 
-    times++;
     attemptive++;
 
     const inputs = await game.getInputs();
+    ended = await game.gameHasEnded(inputs);
 
-    // console.log(inputs);
     const action = brain.forward(inputs);
 
     let index = action >= 16 ? action - 16 : action;
     let color = action >= 16 ? 2 : 1;
 
-    let isValid = true;
     let reward;
 
-    if (inputs[index] === 0) {
+    if (inputs[index] === color) {
 
-      await game.clickOnTile(index, color);
+      reward = -0.15;
+    } else if (possibleValues[index].length === 0) {
 
-      isValid = await game.isValid();
+      reward = -0.8
+    } else if (possibleValues[index].length === 1) {
 
-      reward = isValid ? 1 : -0.8;
+      let rightValue = possibleValues[index][0];
+
+      if (rightValue === color) {
+
+        reward = 1;
+
+        await game.clickOnTile(index, color);
+        possibleValues = await game.getPossibleValues();
+
+        ended = await game.gameHasEnded(inputs);
+      } else {
+
+        reward = -1;
+      }
     } else {
 
-      reward = -0.3
+      if (inputs.filter(input => input === 0).length === 4 && possibleValues.filter(p => p.length === 2).length === 4) {
+
+        reward = 0.2;
+
+        await game.clickOnTile(index, color);
+        possibleValues = await game.getPossibleValues();
+      } else {
+
+        reward = -0.15;
+      }
     }
 
     brain.backward(reward);
 
-    if (!isValid) {
+    if (ended) {
 
       await finalizeEpoch();
-    } else {
-
-      plus++;
-
-      ended = await game.gameHasEnded(inputs);
-
-      if (ended) {
-
-        await finalizeEpoch();
-      }
     }
-  } while (!ended && times < total);
+  } while (times < total);
 
   return game;
 }
 
-ai(10000).then(async game => {
+ai(500).then(async game => {
 
   console.log('trienou');
 
