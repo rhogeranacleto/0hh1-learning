@@ -20,7 +20,10 @@ async function driver() {
 
   async function restart() {
 
+    await page.evaluate(() => window.Game.grid.clear());
     await page.evaluate(() => window.Game.startGame(Levels.getSize(4)));
+    // await page.goto(`file://${__dirname}/0hh1/index.html`);
+    // await waitForGridReady();
   };
 
   function getInputs() {
@@ -45,14 +48,16 @@ async function driver() {
 
   async function clickOnTile(index, color) {
 
-    const tiles = await page.$$('#board td .tile');
+    // const tiles = await page.$$('#board td .tile');
+    // const tiles = await page.evaluate(() => document.querySelectorAll('#board td .tile'));
     // console.log(index, color)
 
-    await tiles[index].click();
+    // await tiles[index].click();
+    await page.click(`#board tr:nth-child(${parseInt(index / 4) + 1}) td:nth-child(${parseInt((index % 4) + 1)})`);
 
     if (color === 2) {
 
-      return tiles[index].click();
+      return await page.click(`#board tr:nth-child(${parseInt(index / 4) + 1}) td:nth-child(${parseInt((index % 4) + 1)})`);;
     }
   }
 

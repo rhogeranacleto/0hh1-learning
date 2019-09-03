@@ -65,6 +65,7 @@ const layer_defs = [];
 layer_defs.push({ type: 'input', out_sx: 1, out_sy: 1, out_depth: networksize });
 layer_defs.push({ type: 'fc', num_neurons: 50, activation: 'relu' });
 layer_defs.push({ type: 'fc', num_neurons: 50, activation: 'relu' });
+layer_defs.push({ type: 'fc', num_neurons: 50, activation: 'relu' });
 layer_defs.push({ type: 'regression', num_neurons: actionCount });
 
 const tdtrainer_options = {
@@ -81,7 +82,7 @@ const opt = {
   gamma: 0.7,
   learning_steps_total: 200000,
   learning_steps_burnin: 3000,
-  epsilon_min: 0.05,
+  epsilon_min: 0.01,
   epsilon_test_time: 0.05,
   layer_defs: layer_defs,
   tdtrainer_options: tdtrainer_options
@@ -120,7 +121,7 @@ async function ai(total = 5000) {
 
   do {
 
-    times++;
+    // times++;
     attemptive++;
 
     const inputs = await game.getInputs();
@@ -140,10 +141,10 @@ async function ai(total = 5000) {
 
       isValid = await game.isValid();
 
-      reward = isValid ? 1 : -0.8;
+      reward = isValid ? 1 : -1;
     } else {
 
-      reward = -0.3
+      reward = -0.7
     }
 
     brain.backward(reward);
@@ -162,12 +163,12 @@ async function ai(total = 5000) {
         await finalizeEpoch();
       }
     }
-  } while (!ended && times < total);
+  } while (epoch < total);
 
   return game;
 }
 
-ai(10000).then(async game => {
+ai(3000).then(async game => {
 
   console.log('trienou');
 
