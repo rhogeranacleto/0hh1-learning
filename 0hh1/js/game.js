@@ -142,7 +142,9 @@ var Game = new (function() {
     onHomeScreen = false;
     $('.screen').hide().removeClass('show');
     $('#game').show();
-    setTimeout(function() { $('#game').addClass('show'); },0);
+    setTimeout(function () {
+      $('#game').addClass('show');
+    }, 0);
     resize();
   }
 

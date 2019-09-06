@@ -61,5 +61,8 @@ var cnnutil = (function (exports) {
 
 })(typeof module != 'undefined' && module.exports);  // add exports to module.exports if in node.js
 
-
-global.cnnutil = cnnutil;
+if (window) {
+  window.cnnutil = cnnutil;
+} else {
+  global.cnnutil = cnnutil;
+}
