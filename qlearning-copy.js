@@ -21,21 +21,57 @@ const tdtrainer_options = {
 
 const opt = {
   temporal_window: temporalWindow,
-  experience_size: 30000,
+  experience_size: 50000,
   start_learn_threshold: 1000,
-  gamma: 0.7,
+  gamma: 0.8,
   learning_steps_total: 200000,
   learning_steps_burnin: 3000,
   epsilon_min: 0.05,
-  epsilon_test_time: 0.05,
+  epsilon_test_time: 0.01,
   layer_defs: layer_defs,
   tdtrainer_options: tdtrainer_options
 };
 
+var ctx = document.getElementById('myChart');
+var myChart = new Chart(ctx, {
+  type: 'line',
+  data: {
+    labels: [],
+    datasets: [{
+      label: 'epoch',
+      data: [],
+      borderWidth: 1
+    }]
+  },
+  options: {
+    // scales: {
+    //     yAxes: [{
+    //         ticks: {
+    //             beginAtZero: true
+    //         }
+    //     }]
+    // }
+    animation: false,
+    elements: {
+      // point: false,
+      line: {
+        tension: 0, // disables bezier curves
+        backgroundColor: '#3b9a98',
+      }
+    },
+    hover: {
+      animationDuration: 0 // duration of animations when hovering an item
+    },
+    responsiveAnimationDuration: 0
+  }
+});
+
 const brain = new deepqlearn.Brain(inputsCount, actionCount, opt); // woohoo
 
 let times = 0;
-let limit = 1000;
+let limit = 20000;
+let attemptive = 0;
+let completed = 0;
 
 function ai() {
 
@@ -46,58 +82,66 @@ function ai() {
   let index = action >= 16 ? action - 16 : action;
   let color = action >= 16 ? 2 : 1;
 
-  Game.grid.tiles[index].value = color;
+  let reward = 0;
+  let isValid = true;
 
-  const isValid = Game.grid.isValid();
+  if (Game.grid.tiles[index].value > 0) {
 
-  brain.backward(isValid ? 0.7 : -1);
+    reward = -0.3;
+  } else {
+    attemptive++;
+
+    Game.grid.tiles[index].value = color;
+
+    isValid = Game.grid.isValid();
+
+    reward += isValid ? 0.8 : -0.7;
+  }
+
+  brain.backward(reward);
 
   if (!isValid) {
 
-    times++;
+    times++
+
+    if (times % 100 == 0) {
+
+      myChart.data.labels.push(times);
+      myChart.data.datasets[0].data.push(attemptive / 100);
+      attemptive = 0;
+      myChart.update();
+    }
+
+    Game.startGame(Levels.getSize(4));
+  } else if (Game.grid.emptyTileCount === 0) {
+
+    completed++;
+    console.log('Completed', completed, 'on time', times);
     Game.startGame(Levels.getSize(4));
   }
 
-  if (Game.grid.emptyTileCount > 0 && times < limit) {
-
+  if (times < limit) {
+    brain.visSelf(document.getElementById('boardsize'))
     return requestAnimationFrame(ai);
   }
 }
 
-var ctx = document.getElementById('myChart');
-var myChart = new Chart(ctx, {
-    type: 'bar',
-    data: {
-        labels: ['Red', 'Blue', 'Yellow', 'Green', 'Purple', 'Orange'],
-        datasets: [{
-            label: '# of Votes',
-            data: [12, 19, 3, 5, 2, 3],
-            backgroundColor: [
-                'rgba(255, 99, 132, 0.2)',
-                'rgba(54, 162, 235, 0.2)',
-                'rgba(255, 206, 86, 0.2)',
-                'rgba(75, 192, 192, 0.2)',
-                'rgba(153, 102, 255, 0.2)',
-                'rgba(255, 159, 64, 0.2)'
-            ],
-            borderColor: [
-                'rgba(255, 99, 132, 1)',
-                'rgba(54, 162, 235, 1)',
-                'rgba(255, 206, 86, 1)',
-                'rgba(75, 192, 192, 1)',
-                'rgba(153, 102, 255, 1)',
-                'rgba(255, 159, 64, 1)'
-            ],
-            borderWidth: 1
-        }]
-    },
-    options: {
-        scales: {
-            yAxes: [{
-                ticks: {
-                    beginAtZero: true
-                }
-            }]
-        }
-    }
-});
+function testGame() {
+
+  const inputs = Game.grid.getValues();
+
+  const action = brain.forward(inputs);
+
+  let index = action >= 16 ? action - 16 : action;
+  let color = action >= 16 ? 2 : 1;
+
+  if (Game.grid.tiles[index].system) {
+
+    return 'nao pode ' + index + ':' + color;
+  } else {
+
+    Game.grid.tiles[index].value = color;
+
+    return Game.grid.isValid();
+  }
+}
