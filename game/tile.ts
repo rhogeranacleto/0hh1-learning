@@ -1,4 +1,5 @@
 import { Grid } from './grid';
+import { Hint, HintType } from './hint';
 
 const Directions = {
   Left: 'Left',
@@ -16,46 +17,60 @@ export class Tile {
   public possibleValues: number[];
   public emptyColPairWith;
   public emptyRowPairWith;
+  public id: string;
+  public id1: string;
+  public id2: string;
+  public system: boolean;
+
+  public get isEmpty() {
+
+    return this._value == 0;
+  }
 
   constructor(
-    public value: number,
-    public grid: Grid,
-    public index: number) {
+    private _value: number,
+    private grid: Grid,
+    private index: number) {
 
     this.x = index % grid.width;
     this.y = Math.floor(index / grid.width);
     this.possibleValues = [];
-    this.emptyColPairWith = null, // other pair that this tile is an empty pair with
-      this.emptyRowPairWith = null; // other pair that this tile is an empty pair with
+    this.emptyColPairWith = null; // other pair that this tile is an empty pair with
+    this.emptyRowPairWith = null; // other pair that this tile is an empty pair with
+
+    this.id = this.x + ',' + this.y;
+    this.id1 = this.id + '=' + 1;
+    this.id2 = this.id + '=' + 2;
   }
 
   public clear() {
-    this.setValue(0);
+
+    this.value = 0;
   }
 
-  public traverse(hor, ver) {
+  private traverse(hor, ver) {
     var newX = this.x + hor,
       newY = this.y + ver;
-    return this.grid.tile(newX, newY);
+    return this.grid.getTile(newX, newY);
   }
 
-  public right() {
+  private right() {
     return this.move(Directions.Right);
   };
 
-  public left() {
+  private left() {
     return this.move(Directions.Left);
   };
 
-  public up() {
+  private up() {
     return this.move(Directions.Up);
   };
 
-  public down() {
+  private down() {
     return this.move(Directions.Down);
   };
 
-  public move(dir: string) {
+  private move(dir: string) {
     switch (dir) {
       case Directions.Right:
         return this.traverse(1, 0);
@@ -68,44 +83,48 @@ export class Tile {
     }
   }
 
-  public setValue(v) {
-    this.value = v;
+  public set value(v: number) {
+    this._value = v;
     this.grid.setValue(this.x, this.y, this.index, v);
-    return this;
   }
 
-  public isPartOfTripleX() {
+  public get value() {
+
+    return this._value;
+  }
+
+  private isPartOfTripleX() {
     var partOfTripleX = false,
-      v = this.value;
+      v = this._value;
     if (!v) return false;
 
     var l = Directions.Left, r = Directions.Right;
-    
+
     partOfTripleX =
-      (this.move(l).value == v && this.move(l).move(l).value == v) ||
-      (this.move(r).value == v && this.move(r).move(r).value == v) ||
-      (this.move(l).value == v && this.move(r).value == v);
+      (this.move(l)._value == v && this.move(l).move(l)._value == v) ||
+      (this.move(r)._value == v && this.move(r).move(r)._value == v) ||
+      (this.move(l)._value == v && this.move(r)._value == v);
     return partOfTripleX;
   }
 
-  public isPartOfTripleY() {
+  private isPartOfTripleY() {
     var partOfTripleY = false,
-      v = this.value;
+      v = this._value;
     if (!v) return false;
     var u = Directions.Up, d = Directions.Down;
     partOfTripleY =
-      (this.move(u).value == v && this.move(u).move(u).value == v) ||
-      (this.move(d).value == v && this.move(d).move(d).value == v) ||
-      (this.move(u).value == v && this.move(d).value == v);
+      (this.move(u)._value == v && this.move(u).move(u)._value == v) ||
+      (this.move(d)._value == v && this.move(d).move(d)._value == v) ||
+      (this.move(u)._value == v && this.move(d)._value == v);
     return partOfTripleY;
   }
 
-  public isPartOfTriple() {
+  private isPartOfTriple() {
     return this.isPartOfTripleX() || this.isPartOfTripleY();
   }
 
-  public collect(hint) {
-    if (this.value > 0)
+  public collect(hint: Hint) {
+    if (this._value > 0)
       return this;
 
     this.possibleValues = [1, 2];
@@ -118,7 +137,7 @@ export class Tile {
 
       // check doubles and in betweens
       for (var dir in Directions) {
-        if (this.move(dir).value == v && this.move(dir).move(dir).value == v) {
+        if (this.move(dir)._value == v && this.move(dir).move(dir)._value == v) {
           this.possibleValues = [opp];
 
           // set the hint
@@ -129,8 +148,8 @@ export class Tile {
         }
       }
 
-      if ((this.move(Directions.Left).value == v && this.move(Directions.Right).value == v) ||
-        (this.move(Directions.Up).value == v && this.move(Directions.Down).value == v)) {
+      if ((this.move(Directions.Left)._value == v && this.move(Directions.Right)._value == v) ||
+        (this.move(Directions.Up)._value == v && this.move(Directions.Down)._value == v)) {
         this.possibleValues = [opp];
 
         // set the hint
@@ -156,9 +175,10 @@ export class Tile {
       return this;
     }
     if (rowInfo.nr0s == 2) {
-      rowInfo.str.replace(reg0, function (m, i) {
+      rowInfo.str.replace(reg0, (m, i) => {
         if (i != this.x)
-          this.emptyRowPairWith = this.grid.tile(i, this.y);
+          this.emptyRowPairWith = this.grid.getTile(i, this.y);
+        return '';
       });
     }
     var colInfo = this.grid.getColInfo(this.x);
@@ -175,9 +195,10 @@ export class Tile {
       return this;
     }
     if (colInfo.nr0s == 2) {
-      colInfo.str.replace(reg0, function (m, i) {
+      colInfo.str.replace(reg0, (m, i) => {
         if (i != this.y)
-          this.emptyColPairWith = this.grid.tile(this.x, i);
+          this.emptyColPairWith = this.grid.getTile(this.x, i);
+        return '';
       });
     }
 
