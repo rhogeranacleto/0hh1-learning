@@ -228,6 +228,7 @@ var Game = new (function() {
     $('#bar [data-action="help"]').removeClass('hidden wiggle');
     // $('#boardsize').html('<span>' + puzzle.size + ' x ' + puzzle.size + '</span>');
     grid = new Grid(puzzle.size, puzzle.size);
+    
     lastSize = puzzle.size;
 
     grid.load(puzzle.empty, puzzle.full);
