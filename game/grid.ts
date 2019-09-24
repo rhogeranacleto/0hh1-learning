@@ -2,6 +2,7 @@ import { Tile } from './tile';
 import * as Utils from './utils';
 import { State } from './state';
 import { Hint, HintType } from './hint';
+import * as $ from 'jquery';
 
 const tripleReg = new RegExp('1{3}|2{3}');
 const count0reg = new RegExp('[^0]', 'g');
@@ -21,7 +22,7 @@ interface IInfo {
 
 export class Grid {
 
-  private id: string;
+  public id: string;
   public width: number;
   public height: number;
   public tiles: Tile[];
@@ -31,7 +32,7 @@ export class Grid {
   private wreg: RegExp;
   private hreg: RegExp;
   public quality: number;
-  private tileToSolve: Tile;
+  private tileToSolve?: Tile;
   public state: State;
   private hint: Hint;
   private gridInfo: {
@@ -39,10 +40,11 @@ export class Grid {
     rows: number[][];
   }
 
-  constructor(
-    private size: number) {
+  private static count = 0;
 
-    this.id = 'board';
+  constructor(private size: number) {
+
+    this.id = `board${++Grid.count}`;
     this.width = size;
     this.height = size;
     this.tiles = [];
@@ -53,7 +55,6 @@ export class Grid {
     this.hreg = new RegExp('[12]{' + this.height + '}');
 
     this.quality = 0;
-    this.tileToSolve = null;
     this.state = new State(this);
     this.hint = new Hint(this);
 
@@ -64,36 +65,57 @@ export class Grid {
     }
 
     for (var i = 0; i < this.width; i++) {
+
       this.gridInfo.cols[i] = Utils.fillArray(0, 0, this.height);
       this.gridInfo.rows[i] = Utils.fillArray(0, 0, this.width);
     }
+    this.load();
+    // this.render();
   }
 
-  private each(handler: (x: number, y: number, i: number, tile: Tile) => void) {
+  private each(handler: (x: number, y: number, i: number, tile: Tile) => void | true) {
+
     for (var i = 0; i < this.tiles.length; i++) {
-      var x = i % this.width,
-        y = Math.floor(i / this.width),
-        tile = this.tiles[i],
-        result = handler.call(tile, x, y, i, tile);
+
+      const x = i % this.width;
+      const y = Math.floor(i / this.width);
+      const tile = this.tiles[i]
+
+      const result = handler.call(tile, x, y, i, tile);
+
       if (result)
+
         break;
     }
+
     return this;
   }
 
-  public load(values?, fullStateValues?) {
+  public load(values?: number[], fullStateValues?: string) {
+
     if (values) {
+
       this.width = this.height = Math.sqrt(values.length);
-      if (fullStateValues)
+
+      if (fullStateValues) {
+
         this.state.save('full', fullStateValues);
+      }
     }
+
     this.tiles = [];
+
     for (var i = 0; i < this.width * this.height; i++) {
+
       var value = values ? values[i] : 0;
+
       this.tiles[i] = new Tile(value, this, i);
+
       this.gridInfo.cols[this.tiles[i].x][this.tiles[i].y] = value;
+
       this.gridInfo.rows[this.tiles[i].y][this.tiles[i].x] = value;
     }
+
     return this;
   }
 
@@ -111,8 +133,12 @@ export class Grid {
       x = i % this.width,
         y = Math.floor(i / this.width);
     }
-    if (x < 0 || x >= this.width || y < 0 || y >= this.height)
+
+    if (x < 0 || x >= this.width || y < 0 || y >= this.height) {
+
       return this.emptyTile;
+    }
+
     return this.tiles[this.getIndex(x, y)];
   }
 
@@ -126,9 +152,10 @@ export class Grid {
     return this;
   }
 
-  private getEmptyTiles() {
+  public getEmptyTiles() {
 
-    var emptyTiles = [];
+    const emptyTiles: Tile[] = [];
+
     this.each((x, y, i, tile) => {
 
       if (tile.isEmpty) {
@@ -140,80 +167,100 @@ export class Grid {
     return emptyTiles;
   }
 
-  private generate() {
-    var result = this.solve(true);
-    this.state.save('full');
-    return result;
-  }
+  // private generate() {
+  //   var result = this.solve(true);
+  //   this.state.save('full');
+  //   return result;
+  // }
 
-  private step(isGenerating: boolean) {
-    return this.solve(isGenerating, true);
-  }
+  // private step(isGenerating: boolean) {
+  //   return this.solve(isGenerating, true);
+  // }
 
-  private ease(percentage) {
-    var emptyTiles = this.getEmptyTiles(),
-      easeCount = percentage ? Math.floor((percentage / 100) * emptyTiles.length) : 1;
-    if (!emptyTiles.length)
-      return this;
+  // private ease(percentage: number) {
+  //   var emptyTiles = this.getEmptyTiles(),
+  //     easeCount = percentage ? Math.floor((percentage / 100) * emptyTiles.length) : 1;
+  //   if (!emptyTiles.length)
+  //     return this;
 
-    Utils.shuffle(emptyTiles);
-    for (var i = 0; i < easeCount; i++) {
-      var tile = emptyTiles[i];
-      tile.value = this.state.getValueForTile('full', tile.x, tile.y);
-    }
-    return this;
-  }
+  //   Utils.shuffle(emptyTiles);
+  //   for (var i = 0; i < easeCount; i++) {
+  //     var tile = emptyTiles[i];
+  //     tile.value = this.state.getValueForTile('full', tile.x, tile.y);
+  //   }
+  //   return this;
+  // }
 
   public solve(isGenerating?: boolean, stepByStep?: boolean) {
 
-    var attempts = 0,
-      tile,
-      emptyTiles,
-      pool = this.tiles;
+    let attempts = 0;
+    let tile;
+    let emptyTiles;
+    let pool = this.tiles;
 
     this.state.clear();
 
     // for stepByStep solving, randomize the pool
     if (isGenerating || stepByStep) {
-      var pool = this.tiles.concat();
+
+      pool = this.tiles.concat();
       Utils.shuffle(pool);
     }
     // if tileToSolve, put its row/col items first as they hugely increase time to solve tileToSolve
-    if (this.tileToSolve) {
-      var sameRow = [],
-        sameCol = [],
-        pool2 = [];
+    let tileToSolve = this.tileToSolve as Tile;
+
+    if (tileToSolve) {
+
+      const sameRow: Tile[] = [];
+      const sameCol: Tile[] = [];
+      const pool2: Tile[] = [];
+
       this.each((x, y, i, tile) => {
 
-        if (x == this.tileToSolve.x)
-          sameCol.push(tile)
-        else if (y == this.tileToSolve.y)
-          sameRow.push(tile)
-        else
+        if (x == tileToSolve.x) {
+
+          sameCol.push(tile);
+        } else if (y == tileToSolve.y) {
+
+          sameRow.push(tile);
+        } else {
+
           pool2.push(tile);
+        }
       });
-      // put all its row/col items first, then this.tileToSolve (again), then the rest
-      pool = sameRow.concat(sameCol, [this.tileToSolve], pool2);
+      // put all its row/col items first, then tileToSolve (again), then the rest
+      pool = sameRow.concat(sameCol, [tileToSolve], pool2);
     }
 
     var totalAtt = this.width * this.height * 50;
+
     while (attempts++ < totalAtt) {
+
       emptyTiles = [];
       let tileChanged: any = false;
 
       // phase 1: try easy fixes while building a pool of remaining empty tiles
       for (var i = 0; i < pool.length; i++) {
+
         tile = pool[i];
-        if (!tile.isEmpty)
+        if (!tile.isEmpty) {
+
           continue
-        var tileCanBeSolved = this.solveTile(tile);
+        }
+
+        let tileCanBeSolved = this.solveTile(tile);
+
         if (tileCanBeSolved) {
-          if (this.hint.active)
+
+          if (this.hint.active) {
+
             return;
+          }
+
           tileChanged = tile;
           break;
-        }
-        else {
+        } else {
+
           emptyTiles.push(tile);
         }
       }
@@ -226,16 +273,23 @@ export class Grid {
 
       // phase 2: no tile changed and empty ones left: pick random and try both values
       if (!tileChanged && emptyTiles.length && isGenerating) {
+
         tile = emptyTiles[0];
         // try both values
-        var valueToTry = Utils.pick(tile.possibleValues);
+        let valueToTry = Utils.pick(tile.possibleValues);
+
         tile.value = valueToTry;
         this.state.push(tile); // mark this value as used
         if (!this.isValid()) {
+
           this.state.pop();
+
           tile.value = valueToTry == 1 ? 2 : 1;
+
           this.state.push(tile);
+
           if (!this.isValid()) {
+
             this.state.pop();
           }
         }
@@ -245,16 +299,20 @@ export class Grid {
 
       // phase 3: push changed tile and check validity
       if (tileChanged) {
+
         this.state.push(tileChanged);
+
         if (!this.isValid()) {
+
           this.state.pop();
         }
-      }
-      // no tile changed and no empty tiles left? break the while loop!
-      else
+      } else {
+
         break;
+      }
 
       if (stepByStep) {
+
         break; // step by step solving? quit
       }
     }
@@ -264,7 +322,7 @@ export class Grid {
     return this.getEmptyTiles().length == 0;
   }
 
-  private generateCombos(combos: any[]) {
+  private generateCombos(combos: string[]) {
 
     for (var i = 0, l = Math.pow(2, this.width); i < l; i++) {
 
@@ -279,12 +337,17 @@ export class Grid {
   }
 
   private clearRow(y: number, combos: any[], comboUsed: any[]) {
+
     for (var x = 0; x < this.width; x++) {
-      var tile = this.getTile(x, y);
+
+      let tile = this.getTile(x, y);
       tile.clear();
     }
-    var combo = comboUsed[y];
+
+    let combo = comboUsed[y];
+
     if (combo) {
+
       combos.push(combo);
       delete comboUsed[y];
     }
@@ -292,7 +355,7 @@ export class Grid {
 
   public generateFast() {
 
-    const combos = [];
+    const combos: string[] = [];
     let y = 0;
     const comboUsed = [];
     const attempts = Utils.fillArray(0, 0, this.width);
@@ -302,26 +365,37 @@ export class Grid {
     Utils.shuffle(combos);
 
     do {
+
       attempts[y]++;
-      var combo = combos.shift();
+      let combo = combos.shift() as string;
+
       for (var x = 0; x < this.width; x++) {
-        var tile = this.getTile(x, y);
-        tile.value = (combo.charAt(x) * 1) + 1;
+
+        let tile = this.getTile(x, y);
+        tile.value = (Number(combo.charAt(x)) * 1) + 1;
       }
+
       if (this.isValid()) {
+
         comboUsed[y] = combo;
         y++;
-      }
-      else {
+      } else {
+
         combos.push(combo);
+
         this.clearRow(y, combos, comboUsed);
+
         if (attempts[y] >= combos.length) {
+
           attempts[y] = 0;
-          var clearFromY = 1;
+          let clearFromY = 1;
+
           for (var y2 = clearFromY; y2 < y; y2++) {
+
             this.clearRow(y2, combos, comboUsed);
             attempts[y2] = 0;
           }
+
           y = clearFromY;
         }
       }
@@ -344,8 +418,10 @@ export class Grid {
 
     if (tile.possibleValues.length == 1) {
 
-      if (this.hint.active)
+      if (this.hint.active) {
+
         return true;
+      }
 
       // tile can be solved
       tile.value = tile.possibleValues[0];
@@ -407,8 +483,10 @@ export class Grid {
   private findCombo(tile: Tile, tile2: Tile) {
     // see if we're checking a row or column
     for (var valueForTile1 = 1; valueForTile1 <= 2; valueForTile1++) {
+
       tile.value = valueForTile1;
       tile2.value = valueForTile1 == 1 ? 2 : 1;
+
       if (!this.isValid()) {
         // only fill out a single tile (the first), which makes backtracking easier
         tile.value = valueForTile1 == 1 ? 2 : 1;
@@ -416,6 +494,7 @@ export class Grid {
         return true;
       }
     }
+
     tile.clear();
     tile2.clear();
     return false;
@@ -423,6 +502,7 @@ export class Grid {
 
   // used for keeping row/col info, and erasing their string representations upon a value change
   public setValue(x: number, y: number, i: number, v: number) {
+
     this.gridInfo.cols[x][y] = v;
     this.gridInfo.rows[y][x] = v;
   }
@@ -470,27 +550,35 @@ export class Grid {
 
   // not a full this.isValid check, only checks for balanced spread of 0's and 1's
   public isValid() {
+
     this.hint.doubleColFound = [];
     this.hint.doubleRowFound = [];
 
-    var rows = {},
-      cols = {};
+    const rows: { [key: string]: number } = {};
+    const cols: { [key: string]: number } = {};
     for (var i = 0; i < this.width; i++) {
+
       var info = this.getColInfo(i);
       // if too many 1's or 2's found, or three in a row, leave
-      if (info.isInvalid)
+      if (info.isInvalid) {
+
         return false;
+      }
       // if no empty tiles found, see if it's double
       if (info.isFull) {
+
         if (cols[info.str]) {
 
           info.unique = false;
 
-          if (this.hint.active)
+          if (this.hint.active) {
+
             this.hint.doubleColFound.push(cols[info.str] - 1, i);
+          }
+
           return false;
-        }
-        else {
+        } else {
+
           info.unique = true;
           cols[info.str] = i + 1;
         }
@@ -498,19 +586,24 @@ export class Grid {
 
       var info = this.getRowInfo(i);
       // if too many 1's or 2's found, or three in a row, leave
-      if (info.isInvalid)
+      if (info.isInvalid) {
+
         return false;
+      }
       // if no empty tiles found, see if it's double
       if (info.isFull) {
+
         if (rows[info.str]) {
 
           info.unique = false;
 
-          if (this.hint.active)
+          if (this.hint.active) {
+
             this.hint.doubleRowFound.push(rows[info.str] - 1, i);
+          }
           return false;
-        }
-        else {
+        } else {
+
           info.unique = true;
           rows[info.str] = i + 1;
         }
@@ -520,46 +613,50 @@ export class Grid {
     return true;
   }
 
-  private breakDownSimple() {
-    var tile,
-      pool = this.tiles.concat(),
-      i = 0;
+  // private breakDownSimple() {
+  //   var tile,
+  //     pool = this.tiles.concat(),
+  //     i = 0;
 
-    Utils.shuffle(pool);
-    var remainingTiles = [];
+  //   Utils.shuffle(pool);
+  //   var remainingTiles = [];
 
-    while (i < pool.length) {
-      tile = pool[i++];
-      var prevValue = tile.value;
-      tile.clear();
-      // if only this one cleared tile cannot be solved
-      if (!this.solveTile(tile)) {
-        // restore its value
-        tile.value = prevValue;
-        remainingTiles.push(tile);
-      } else {
-        tile.clear();
-      }
-    }
-    this.quality = Math.round(100 * (this.getEmptyTiles().length / (this.width * this.height)));
-    return remainingTiles;
-  }
+  //   while (i < pool.length) {
+  //     tile = pool[i++];
+  //     var prevValue = tile.value;
+  //     tile.clear();
+  //     // if only this one cleared tile cannot be solved
+  //     if (!this.solveTile(tile)) {
+  //       // restore its value
+  //       tile.value = prevValue;
+  //       remainingTiles.push(tile);
+  //     } else {
+  //       tile.clear();
+  //     }
+  //   }
+  //   this.quality = Math.round(100 * (this.getEmptyTiles().length / (this.width * this.height)));
+  //   return remainingTiles;
+  // }
 
-  public breakDown(remainingTiles?) {
-    var attempts = 0,
-      tile,
-      pool = remainingTiles || this.tiles.concat();
+  public breakDown(remainingTiles?: Tile[]) {
 
-    this.tileToSolve = null;
+    let attempts = 0;
+    let tile;
+    let pool = remainingTiles || this.tiles.concat();
+
+    this.tileToSolve = undefined;
     this.state.clear();
     //State.save('full');
 
     //console.log('items to solve', pool.length)
 
-    if (!remainingTiles)
-      Utils.shuffle(pool); // not shuffling increases this.quality!
+    if (!remainingTiles) {
+
+      Utils.shuffle(pool);
+    } // not shuffling increases this.quality!
 
     var i = 0;
+
     while (i < pool.length && attempts++ < 6) {
       tile = pool[i++];
       this.tileToSolve = tile;
@@ -569,14 +666,17 @@ export class Grid {
       this.state.save('breakdown');
       //console.log('save breakdown')
       if (this.solve()) {
+
         this.state.restore('breakdown');
         attempts = 0;
       } else {
+
         this.state.restore('breakdown');
         clearedTile.value = clearedTileValue;
       }
     }
-    this.tileToSolve = null;
+
+    this.tileToSolve = undefined;
     this.state.save('empty');
     this.quality = Math.round(100 * (this.getEmptyTiles().length / (this.width * this.height)));
 
@@ -587,7 +687,7 @@ export class Grid {
 
         tile.system = true;
       }
-    })
+    });
   }
 
   public getWrongTiles() {
@@ -604,20 +704,40 @@ export class Grid {
   }
 
   public getValues() {
-    var values = [];
+
+    const values: number[] = [];
+
     this.each((x, y, i, tile) => {
 
       values.push(tile.value)
     });
+
     return values;
   }
 
-  static start(size: number) {
+  /* public render() {
 
-    const grid = new Grid(size);
+    const table = $('<table></table>');
+    const trs: JQuery<HTMLElement>[] = [];
 
-    grid.load();
-    grid.generateFast();
+    for (let i = 0; i < this.size; i++) {
+
+      const tr = $('<tr></tr>');
+      trs.push(tr);
+      table.append(tr);
+    }
+
+    this.each((x, y, i, tile) => {
+
+      trs[y].append(tile.td);
+    });
+
+    $('#boards').append(table);
+  } */
+
+  public init() {
+
+    this.generateFast();
 
     let attempts = 0;
     let quality = 0;
@@ -630,15 +750,15 @@ export class Grid {
     };
 
     do {
-      if (attempts > 0) {
-        grid.clear();
-        grid.state.restore('full')
-      }
-      grid.breakDown();
-      quality = grid.quality;
-    }
-    while (quality < qualityThreshold[4] && attempts++ < 42);
 
-    return grid;
+      if (attempts > 0) {
+
+        this.clear();
+        this.state.restore('full')
+      }
+
+      this.breakDown();
+      quality = this.quality;
+    } while (quality < qualityThreshold[4] && attempts++ < 42);
   }
 }

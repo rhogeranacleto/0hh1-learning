@@ -1,0 +1,22 @@
+td {
+  width: 10px;
+  height: 10px;
+  border: 1px solid #cecece;
+}
+
+td.red {
+  background-color: red;
+}
+
+td.blue {
+  background-color: blue;
+}
+
+#boards {
+  display: flex;
+  flex-wrap: wrap;
+}
+
+table {
+  margin: 0px 15px 15px;
+}

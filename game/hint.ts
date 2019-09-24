@@ -29,8 +29,8 @@ export class Hint {
   private visible: boolean;
   private info: {
     type: string;
-    tile: Tile;
-    tile2: Tile;
+    tile?: Tile;
+    tile2?: Tile;
     doubleRowOrCol: number[]
   };
   public doubleColFound: number[];
@@ -42,8 +42,8 @@ export class Hint {
     this.visible = false;
     this.info = {
       type: HintType.None,
-      tile: null,
-      tile2: null,
+      tile: undefined,
+      tile2: undefined,
       doubleRowOrCol: []
     };
     this.doubleColFound = [];
@@ -66,14 +66,14 @@ export class Hint {
   //   }
   // }
 
-  public mark(tile, hintType, tile2?, doubleRowOrCol?) {
+  public mark(tile: Tile, hintType: string, tile2?: Tile, doubleRowOrCol?: number[]) {
     if (this.active) {
       //console.log('mark', hintType, doubleRowOrCol)
       //console.log('tiles', tile, tile2)
       this.info.tile = tile;
-      this.info.tile2 = tile2 || null;
+      this.info.tile2 = tile2;
       this.info.type = hintType;
-      this.info.doubleRowOrCol = doubleRowOrCol;
+      this.info.doubleRowOrCol = doubleRowOrCol as number[];
       return true;
     }
     return false;
@@ -123,11 +123,11 @@ export class Hint {
   //   }
   // }
 
-  private show(type) {
-    this.visible = true;
-  }
+  // private show(type) {
+  //   this.visible = true;
+  // }
 
-  private hide() {
-    this.visible = false;
-  }
+  // private hide() {
+  //   this.visible = false;
+  // }
 };

@@ -1,5 +1,6 @@
 import { Grid } from './grid';
 import { Hint, HintType } from './hint';
+import * as $ from 'jquery';
 
 const Directions = {
   Left: 'Left',
@@ -15,12 +16,13 @@ export class Tile {
   public x: number;
   public y: number;
   public possibleValues: number[];
-  public emptyColPairWith;
-  public emptyRowPairWith;
+  public emptyColPairWith?: Tile;
+  public emptyRowPairWith?: Tile;
   public id: string;
   public id1: string;
   public id2: string;
   public system: boolean;
+  // public td: JQuery<HTMLElement>;
 
   public get isEmpty() {
 
@@ -35,12 +37,13 @@ export class Tile {
     this.x = index % grid.width;
     this.y = Math.floor(index / grid.width);
     this.possibleValues = [];
-    this.emptyColPairWith = null; // other pair that this tile is an empty pair with
-    this.emptyRowPairWith = null; // other pair that this tile is an empty pair with
-
+    this.emptyColPairWith = undefined; // other pair that this tile is an empty pair with
+    this.emptyRowPairWith = undefined; // other pair that this tile is an empty pair with
+    this.system = false;
     this.id = this.x + ',' + this.y;
     this.id1 = this.id + '=' + 1;
     this.id2 = this.id + '=' + 2;
+    // this.td = $('<td></td>');
   }
 
   public clear() {
@@ -48,7 +51,7 @@ export class Tile {
     this.value = 0;
   }
 
-  private traverse(hor, ver) {
+  private traverse(hor: number, ver: number) {
     var newX = this.x + hor,
       newY = this.y + ver;
     return this.grid.getTile(newX, newY);
@@ -70,7 +73,7 @@ export class Tile {
     return this.move(Directions.Down);
   };
 
-  private move(dir: string) {
+  private move(dir: string): Tile {
     switch (dir) {
       case Directions.Right:
         return this.traverse(1, 0);
@@ -78,13 +81,29 @@ export class Tile {
         return this.traverse(-1, 0);
       case Directions.Up:
         return this.traverse(0, -1);
-      case Directions.Down:
+      default:
         return this.traverse(0, 1);
     }
   }
 
   public set value(v: number) {
+
     this._value = v;
+
+    /* if (v === 1) {
+
+      this.td.addClass('red');
+      this.td.removeClass('blue');
+    } else if (v === 2) {
+
+      this.td.removeClass('red');
+      this.td.addClass('blue');
+    } else {
+
+      this.td.removeClass('red');
+      this.td.removeClass('blue');
+    } */
+
     this.grid.setValue(this.x, this.y, this.index, v);
   }
 
@@ -128,8 +147,8 @@ export class Tile {
       return this;
 
     this.possibleValues = [1, 2];
-    this.emptyRowPairWith = null;
-    this.emptyColPairWith = null;
+    this.emptyRowPairWith = undefined;
+    this.emptyColPairWith = undefined;
 
     // first pass is to check four doubles, in betweens, and 50/50 row/col spread
     for (var v = 1; v <= 2; v++) {

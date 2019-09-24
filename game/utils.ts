@@ -7,26 +7,26 @@
  * Written by Martin Kool
  * martin@q42.nl | @mrtnkl
  */
-export function isDoubleTapBug(evt) {
-  if (!('ontouchstart' in document.documentElement)) return false;
-  if (!evt.originalEvent.touches) {
-    evt.preventDefault();
-    evt.stopPropagation();
-    return true;
-  }
-  return false;
-}
+// export function isDoubleTapBug(evt) {
+//   if (!('ontouchstart' in document.documentElement)) return false;
+//   if (!evt.originalEvent.touches) {
+//     evt.preventDefault();
+//     evt.stopPropagation();
+//     return true;
+//   }
+//   return false;
+// }
 
 
-export function isTouch() {
-  return 'ontouchstart' in document.documentElement;
-}
+// export function isTouch() {
+//   return 'ontouchstart' in document.documentElement;
+// }
 
 export function padLeft(nr: string, n: number, str?: string) {
   return Array(n - String(nr).length + 1).join(str || '0') + nr;
 }
 
-export function trim(s) {
+export function trim(s: string) {
   return s.replace(/^\s*|\s*$/gi, '');
 }
 
@@ -41,12 +41,12 @@ export function between(min: number, max: number, decimals?: number) {
   return Math.floor((Math.random() * (max - min + 1)) + min);
 }
 
-export function shuffleSimple(sourceArray) {
+export function shuffleSimple(sourceArray: []) {
   sourceArray.sort(function () { return .5 - Math.random(); });
   return sourceArray;
 }
 
-export function shuffle(sourceArray) {
+export function shuffle(sourceArray: any) {
   for (var n = 0; n < sourceArray.length - 1; n++) {
     var k = n + Math.floor(Math.random() * (sourceArray.length - n));
 
@@ -57,7 +57,7 @@ export function shuffle(sourceArray) {
   return sourceArray;
 }
 
-export function index(obj, i) {
+export function index(obj: any, i: number) {
   var j = 0;
   for (var name in obj) {
     if (j == i)
@@ -66,25 +66,25 @@ export function index(obj, i) {
   }
 }
 
-export function areArraysEqual(arr1, arr2) {
+export function areArraysEqual(arr1: [], arr2: []) {
   if (!arr1 || !arr2) return false;
   return arr1.join('|') === arr2.join('|'); // dirty but enough
 }
 
-export function count(obj) {
+export function count(obj: any) {
   var count = 0;
   for (var name in obj)
     count++;
   return count;
 }
 
-export function eat(e) {
-  e.preventDefault();
-  e.stopPropagation();
-  return false;
-}
+// export function eat(e) {
+//   e.preventDefault();
+//   e.stopPropagation();
+//   return false;
+// }
 
-export function pick(arr) {
+export function pick(arr: any) {
   var drawFromArr = arr;
   if (arr.constructor == Object) {
     drawFromArr = [];
@@ -97,7 +97,7 @@ export function pick(arr) {
   return drawFromArr[drawIndex];
 }
 
-export function draw(arr, optionalValueToMatch) {
+export function draw(arr: string[], optionalValueToMatch: any) {
   var drawFromArr = arr;
   if (arr.constructor == Object) {
     drawFromArr = [];
@@ -125,7 +125,7 @@ export function draw(arr, optionalValueToMatch) {
   return value;
 }
 // removes the given value from arr
-export function removeFromArray(arr, val) {
+export function removeFromArray(arr: [], val: any) {
   if (arr.length == 0)
     return null;
   var foundMatch = false, drawIndex = -1;
@@ -143,7 +143,7 @@ export function removeFromArray(arr, val) {
   return value;
 }
 
-export function toArray(obj) {
+export function toArray(obj: any) {
   var arr = [];
   for (var id in obj)
     arr.push(id);
@@ -160,14 +160,14 @@ export function fillArray(min: number, max: number, repeatEachValue: number) {
   return arr;
 }
 
-export function contains(arr, item) {
+export function contains(arr: [], item: any) {
   for (var i = 0; i < arr.length; i++)
     if (arr[i] == item)
       return true;
   return false;
 }
 
-export function setCookie(name, value, days) {
+export function setCookie(name: string, value: string, days: any) {
   if (days) {
     var date = new Date();
     date.setTime(date.getTime() + (days * 24 * 60 * 60 * 1000));
@@ -177,19 +177,19 @@ export function setCookie(name, value, days) {
   document.cookie = name + "=" + value + expires + "; path=/";
 }
 
-export function getCookie(name) {
-  var nameEQ = name + "=";
-  var ca = document.cookie.split(';');
-  for (var i = 0; i < ca.length; i++) {
-    var c = ca[i];
-    while (c.charAt(0) == ' ')
-      c = c.substring(1, c.length);
-    if (c.indexOf(nameEQ) == 0)
-      return c.substring(nameEQ.length, c.length);
-  }
-  return null;
-}
+// export function getCookie(name: string) {
+//   var nameEQ = name + "=";
+//   var ca = document.cookie.split(';');
+//   for (var i = 0; i < ca.length; i++) {
+//     var c = ca[i];
+//     while (c.charAt(0) == ' ')
+//       c = c.substring(1, c.length);
+//     if (c.indexOf(nameEQ) == 0)
+//       return c.substring(nameEQ.length, c.length);
+//   }
+//   return null;
+// }
 
-export function clearCookie(name) {
-  this.setCookie(name, "", -1);
-}
+// export function clearCookie(name: string) {
+//   this.setCookie(name, "", -1);
+// }

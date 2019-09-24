@@ -3,12 +3,14 @@ import { Tile } from "./tile";
 
 export class State {
 
-  private saveSlots;
-  private stateStack;
-  public currentState;
+  private saveSlots: { [key: string]: any };
+  private stateStack: { [key: string]: any };
+  public currentState: { [key: string]: any };
 
-  constructor(private grid: Grid) { 
+  constructor(private grid: Grid) {
     this.saveSlots = {};
+    this.stateStack = {};
+    this.currentState = {};
   }
 
   public clear() {
@@ -41,12 +43,12 @@ export class State {
     while (this.currentState && this.currentState[tile.id] == 2)
   }
 
-  public save(saveId: string, values?) {
+  public save(saveId: string, values?: number[] | string) {
     saveId = saveId || '1';
-    var slot = { id: saveId, values: [], restoreCount: 0 };
+    const slot: { id: string; values: number[]; restoreCount: number } = { id: saveId, values: [], restoreCount: 0 };
     if (values) {
       for (var i = 0; i < values.length; i++)
-        slot.values.push(values[i])
+        slot.values.push(values[i] as number)
     }
     else {
       for (var i = 0; i < this.grid.tiles.length; i++)
@@ -56,7 +58,7 @@ export class State {
     return this;
   }
 
-  public restore(saveId) {
+  public restore(saveId: string) {
 
     saveId = saveId || '1';
     var slot = this.saveSlots[saveId];
