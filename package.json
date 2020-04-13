@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "test": "jest",
     "start": "nodemon index.js"
   },
   "author": "",
@@ -12,14 +12,20 @@
   "dependencies": {
     "@tensorflow/tfjs": "^1.2.8",
     "@tensorflow/tfjs-node": "^1.2.8",
+    "@tensorflow/tfjs-node-gpu": "^1.7.2",
     "blessed": "^0.1.81",
     "blessed-contrib": "^4.8.16",
     "convnetjs": "^0.3.0",
     "plotly": "^1.0.6",
     "puppeteer": "^1.19.0",
-    "reimprovejs": "0.0.2"
+    "reimprovejs": "0.0.2",
+    "typescript": "^3.8.3"
   },
   "devDependencies": {
-    "nodemon": "^1.19.1"
+    "@types/jest": "^25.2.1",
+    "jest": "^25.2.7",
+    "nodemon": "^1.19.1",
+    "ts-jest": "^25.3.1",
+    "ts-node": "^8.8.2"
   }
 }

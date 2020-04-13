@@ -1,4 +1,4 @@
-/* 
+/*
  * BackgroundService
  * Creates a web worker for generating puzzles in the background.
  * (c) 2014 Q42
@@ -13,8 +13,9 @@ var BackgroundService = new (function() {
 
 	if (Game.debug)
 		console.log('BackgroundService:', enabled);
-	
-	function generateGridAndSolution(size) {
+
+  function generateGridAndSolution(size) {
+    debugger;
 	  var d = new Date();
 	  var grid = new Grid(size);
 	  grid.generateFast();
@@ -29,7 +30,7 @@ var BackgroundService = new (function() {
 	        10: 60
 	      },
 	      attempts = 0;
-	  // quality control makes sure grids get proper 
+	  // quality control makes sure grids get proper
     do {
       if (attempts > 0) {
         grid.clear();
@@ -59,7 +60,7 @@ var BackgroundService = new (function() {
 		var blob = new Blob([js], { type: "text/javascript" });
 		worker = new Worker(window.URL.createObjectURL(blob));
 		worker.onmessage = function(e) {
-			var puzzle = JSON.parse(e.data);			
+			var puzzle = JSON.parse(e.data);
 			onPuzzleGenerated(puzzle);
 		}
 	}
