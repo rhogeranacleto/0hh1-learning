@@ -19,6 +19,20 @@
       ]
     },
     {
+      "type": "node",
+      "request": "launch",
+      "name": "Launch file",
+      "skipFiles": [
+        "<node_internals>/**",
+        "node_modules/**"
+      ],
+      "program": "${file}",
+      "preLaunchTask": "tsc: build - tsconfig.json",
+      "outFiles": [
+        "${workspaceFolder}/out/**/*.js"
+      ]
+    },
+    {
 			"name": "Node Inspector",
 			"type": "node",
 			"request": "launch",

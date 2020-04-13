@@ -1,42 +1,6 @@
-import { validate, IGameTiles } from "./validate-game";
-
-const zeroFillLeft = (nr: string, n: number, str?: string) => Array(n - String(nr).length + 1).join(str || '0') + nr;
-
-const shuffle = (sourceArray: string[]) => {
-
-  for (var n = 0; n < sourceArray.length - 1; n++) {
-
-    var k = n + Math.floor(Math.random() * (sourceArray.length - n));
-
-    var temp = sourceArray[k];
-    sourceArray[k] = sourceArray[n];
-    sourceArray[n] = temp;
-  }
-
-  return sourceArray;
-};
-
-const fillArray = (min: number, max: number, repeatEachValue: number) => {
-
-  if (!repeatEachValue) {
-
-    repeatEachValue = 1;
-  }
-
-  const arr = new Array();
-
-  for (var repeat = 0; repeat < repeatEachValue; repeat++) {
-
-    for (var i = min; i <= max; i++) {
-
-      arr.push(i);
-    }
-  }
-
-  return arr;
-};
-
-const getIndex = (x: number, y: number, size: number) => y * size + x;
+import { validate } from "./validate-game";
+import { shuffle, getIndex, fillArray, zeroFillLeft } from "./helper";
+import { IGameTiles } from "./game.interface";
 
 const tripleReg = new RegExp('0{3}|1{3}', 'g');
 

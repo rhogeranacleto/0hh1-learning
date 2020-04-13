@@ -1,4 +1,4 @@
-export type IGameTiles = number[];
+import { IGameTiles } from "./game.interface";
 
 export const validate = (tiles: IGameTiles) => {
 
@@ -110,14 +110,14 @@ export const validateEquality = (lines: IGameTiles[]) => {
   return true;
 }
 
-export const listToMatrix = (line: IGameTiles) => {
+export const listToMatrix = (state: IGameTiles) => {
 
-  const lineSize = Math.sqrt(line.length);
+  const lineSize = Math.sqrt(state.length);
   const result: IGameTiles[] = [];
 
-  for (let i = 0; i < line.length; i = i + lineSize) {
+  for (let i = 0; i < state.length; i = i + lineSize) {
 
-    result.push(line.slice(i, i + lineSize));
+    result.push(state.slice(i, i + lineSize));
   }
 
   return result;
